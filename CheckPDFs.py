@@ -57,7 +57,7 @@ def main():
                         break
 
                 if len(text) < 500:
-                    Log(f"{pathname}  --  {len(text)} characters")
+                    Log(f"{rootlesspathname}  --  {len(text)} characters")
 
                 if pdfsScanned%500 == 0:
                     Log(f"{pdfsScanned} PDFs scanned; working on directory {rootpath}")
