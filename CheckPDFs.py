@@ -1,7 +1,8 @@
 from tkinter import filedialog
 from tkinter import *
 import os
-import PyPDF2
+from PyPDF2 import PdfReader
+from PyPDF2 import errors as PyPDF2errors
 
 from Log import LogOpen, Log, LogError
 
@@ -26,20 +27,24 @@ def main():
 
                 # open the pdf file
                 try:
-                    object=PyPDF2.PdfFileReader(pathname)
-                except PyPDF2.errors.PdfReadError:
-                    LogError(f"{rootlesspathname} PdfFileReader() failed with PdfReadError")
+                    file_in=open(pathname, 'rb')
+                    object=PdfReader(file_in)
+                except PyPDF2errors.PdfReadError:
+                    LogError(f"{rootlesspathname} PdfReader() failed with PdfReadError")
                     continue
                 except ValueError:
-                    LogError(f"{rootlesspathname} PdfFileReader() failed with ValueError")
+                    LogError(f"{rootlesspathname} PdfReader() failed with ValueError")
+                    continue
+                except BaseException:
+                    LogError(f"{rootlesspathname} PdfReader() failed with BaseException (whatever that means!)")
                     continue
 
                 try:
-                    NumPages=object.getNumPages()
-                except PyPDF2.errors.DependencyError:
+                    NumPages=len(object.pages)
+                except PyPDF2errors.DependencyError:
                     LogError(f"{rootlesspathname} getNumPages() failed with DependencyError")
                     continue
-                except PyPDF2.errors.PdfReadError:
+                except PyPDF2errors.PdfReadError:
                     LogError(f"{rootlesspathname} getNumPages() failed with PdfReadError")
                     continue
 
@@ -47,14 +52,18 @@ def main():
                 # extract text and do the search
                 text=""
                 for i in range(0, NumPages):
-                    PageObj=object.getPage(i)
+                    PageObj=object.pages[i]
                     try:
-                        text+=PageObj.extractText()
+                        text+=PageObj.extract_text()
                     except TypeError:
                         LogError(f"{rootlesspathname} getPage(i) failed with TypeError")
                         break
                     if len(text) > 500:
                         break
+
+                if "fan" not in text and "Fan" not in text:
+                    Log(f"{rootlesspathname}  -- fan not found!")
+
 
                 if len(text) < 500:
                     Log(f"{rootlesspathname}  --  {len(text)} characters")
