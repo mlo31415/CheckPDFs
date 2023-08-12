@@ -16,13 +16,19 @@ def main():
 
     LogOpen("PDFs with no text")
 
+    startAt=0       # Skip this many PDFs before starting the search
     pdfsScanned=0
     for rootpath, dirs, files in os.walk(startpath, topdown=False):
         for name in files:
             _, extension = os.path.splitext(name)
             if extension.lower() == ".pdf":
                 pdfsScanned+=1
+
+                if pdfsScanned < startAt:   # Skip startAt PDFs before actually doing anything
+                    continue
+
                 pathname=os.path.join(rootpath, name)
+                #pathname="D:/fanac.org backups/fanac.org 2023-07-30/public_html/fanzines/Catch_Trap/catch_trap_89_bradley_1960-02_fapa_90.pdf"
                 rootlesspathname=pathname.removeprefix(startpath)
 
                 # open the pdf file
@@ -47,7 +53,12 @@ def main():
                 except PyPDF2errors.PdfReadError:
                     LogError(f"{rootlesspathname} getNumPages() failed with PdfReadError")
                     continue
+                except PyPDF2errors.RecursionError:
+                    LogError(f"{rootlesspathname} getNumPages() failed with RecursionError")
+                    continue
 
+                if pdfsScanned%50 == 0:
+                    Log(f"*********{pdfsScanned} PDFs scanned; working on directory {rootpath}")
 
                 # extract text and do the search
                 text=""
@@ -58,18 +69,12 @@ def main():
                     except TypeError:
                         LogError(f"{rootlesspathname} getPage(i) failed with TypeError")
                         break
-                    if len(text) > 500:
+
+                    if "fan" in text or "Fan" in text:
                         break
 
                 if "fan" not in text and "Fan" not in text:
-                    Log(f"{rootlesspathname}  -- fan not found!")
-
-
-                if len(text) < 500:
-                    Log(f"{rootlesspathname}  --  {len(text)} characters")
-
-                if pdfsScanned%500 == 0:
-                    Log(f"{pdfsScanned} PDFs scanned; working on directory {rootpath}")
+                    Log(f"{rootlesspathname}  -- fan not found!  Length is {len(text)} characters")
 
 
 if __name__ == "__main__":
